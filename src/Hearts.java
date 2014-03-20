@@ -1,5 +1,3 @@
-import org.omg.DynamicAny._DynArrayStub;
-
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.Scanner;
@@ -23,34 +21,69 @@ class Card {
 }
 
 public class Hearts {
-    private static int totalTurnPoints = 0;
-
-    private static boolean gameOver = false;
-    private static int turnOrder = 0;
-    private static boolean startOfTrick = true;
-    private static String cardToPlaySuit = "";
-    private static int cardToPlayRank = 0;
-    private static boolean cardLegal = false;
-    private static boolean deuceClubsDealt = false;
-    private static String trickSuit = "";
-    private static boolean firstTrick = false;
-    private static int[] turnPoints = {0,0,0,0};
-    private static int[] gamePoints = {0,0,0,0};
     private static ArrayList<Card> deckOfCards = new ArrayList<Card>(52);
-    private static int trickWinner = 0;
+
+    private static int totalTurnPoints = 0, totalGamePoints = 0;
+    private static int turnOrder = 0, trickWinner = 0;
+    private static int cardToPlayRank = 0;
+
+    private static int[] roundPoints = {0,0,0,0}, gamePoints = {0,0,0,0};
+
+    private static boolean startOfTrick = true, roundOver = false;
+    private static boolean gameOver = false;
+    private static boolean cardLegal = false, deuceClubsDealt = false;
+    private static boolean firstTrick = false;
+
+    private static String cardToPlaySuit = "", trickSuit = "";
 
     public static void main( String[] args ) {
+        while (!gameOver) {
+            arrangeDeckAndGame();
+            playGame();
+            endRound();
+        }
+    }
+
+    public static void arrangeDeckAndGame() {
         createDeck();
         shuffleDeck();
         dealDeck();
         sortHand();
-        playGame();
+    }
 
-        //for (int i = 0; i < deckOfCards.size(); i++ )
-        //    out.println(deckOfCards.get(i));
+    public static void playGame() {
+        while (!roundOver) {
+            if (startOfTrick)
+                startTrick();
+            displayRoundScore();
+            displayTable();
+            displayHand();
+
+            do {
+                getCardToPlay();
+                out.println("Card Played: " + cardToPlayRank + cardToPlaySuit);
+                cardLegal = checkCardPlayedIsLegal();
+            } while (!cardLegal);
+
+            playCardToTable();
+
+            turnOrder++;
+            for ( int i = 1; i <= 20; i++)
+                out.println();
+
+            if ( turnOrder > 4 )
+                turnOrder = 1;
+
+            boolean endOfTrick = checkEndTrick();
+            if ( endOfTrick )
+                endTrick();
+
+            roundOver = checkRoundOver();
+        }
     }
 
     public static void createDeck() {
+        out.println( "Creating deck of cards..." );
         for (int i = 1; i <= 4; i++ ) {
             for (int j = 2; j <= 14; j++ ) {
                 Card singleCard = new Card();
@@ -143,23 +176,23 @@ public class Hearts {
     }
 
     public static void shuffleDeck() {
+        out.println( "Shuffling cards..." );
         Random r = new Random();
         for (int i = 0; i < deckOfCards.size(); i++) {
             int randomSpot = r.nextInt(51);
-            deckOfCards = swapCardsInDeck(deckOfCards, i, randomSpot);
+            swapCardsInDeck(deckOfCards, i, randomSpot);
         }
     }
 
-    public static ArrayList swapCardsInDeck( ArrayList<Card> deckOfCards, int from, int dest ) {
+    public static void swapCardsInDeck( ArrayList<Card> deckOfCards, int from, int dest ) {
         Card tempCard = new Card();
         tempCard = deckOfCards.get(from);
         deckOfCards.set( from, deckOfCards.get(dest) );
         deckOfCards.set( dest, tempCard);
-
-        return deckOfCards;
     }
 
     public static void dealDeck() {
+        out.println( "Dealing cards..." );
         for (int i =0; i < deckOfCards.size(); i++ ) {
             int handDestination = (i+1) % 4;
             switch(handDestination) {
@@ -177,64 +210,6 @@ public class Hearts {
                         break;
             }
         }
-    }
-
-    public static void playGame() {
-        //int turns = 1;
-        while (!gameOver) {
-            if (startOfTrick)
-                startTrick();
-            displayScore();
-            displayTable();
-            displayHand();
-
-            do {
-            getCardToPlay();
-            out.println("Card Played: " + cardToPlayRank + cardToPlaySuit);
-            cardLegal = checkCardPlayedIsLegal();
-            } while (!cardLegal);
-
-            playCardToTable();
-
-            turnOrder++;
-            if ( turnOrder > 4 )
-                turnOrder = 1;
-
-            boolean endOfTrick = checkEndTrick();
-            if ( endOfTrick )
-                endTrick();
-
-            //turns++;
-
-            gameOver = checkRoundOver();
-        }
-    }
-
-    public static boolean checkRoundOver(){
-        boolean roundOverTest = false;
-        if ( totalTurnPoints >= 26 ) {
-            int indexPoints = 0;
-            roundOverTest = true;
-            for (int i = 0; i < turnPoints.length; i++ ) {
-                if ( turnPoints[i] == 26 ) {
-                    indexPoints = i;
-                    for ( int k = 0; k < turnPoints.length; k++ ) {
-                        if ( k != indexPoints )
-                            gamePoints[k] += 26;
-                    }
-                }
-                else
-                    gamePoints[i] += turnPoints[i];
-            }
-            for ( int i : turnPoints )
-                turnPoints[i] = 0;
-        }
-
-
-        if (roundOverTest)
-            displayScore();
-
-        return roundOverTest;
     }
 
     public static void sortHand() {
@@ -261,6 +236,30 @@ public class Hearts {
         }
     }
 
+    public static void startTrick() {
+        if ( trickWinner == 0 ) {
+            int index = 0;
+            for (int i = 0; i < deckOfCards.size(); i++ ) {
+                if ( deckOfCards.get(i).rank < deckOfCards.get(index).rank && deckOfCards.get(i).location.equals("Hand") )
+                    index = i;
+                else if ( deckOfCards.get(i).rank == deckOfCards.get(index).rank )
+                    if ( deckOfCards.get(i).suit < deckOfCards.get(index).suit )
+                        index = i;
+            }
+
+            turnOrder = deckOfCards.get(index).owner;
+        }
+        else if ( trickWinner > 0 && trickWinner < 5 ) {
+            turnOrder = trickWinner;
+            trickWinner = 0;
+        }
+        else
+            out.println( "TRICK START DETERMINATION ERROR " );
+
+        //if ( deckOfCards.get(index).rank == 2 && deckOfCards.get(index).suit == 1 )
+        //deuceClubsDealt = true;
+    }
+
     public static void displayHand() {
         out.print( "PLAYER " + turnOrder + " HAND:\n" );
         for (int i = 0; i < deckOfCards.size(); i++ ) {
@@ -281,9 +280,17 @@ public class Hearts {
         out.println();
     }
 
+    public static void displayRoundScore() {
+        out.print( "\nROUND SCORE: Player One[" + roundPoints[0] + "] / ");
+        out.print( "Two[" + roundPoints[1] + "] / ");
+        out.print( "Three[" + roundPoints[2] + "] / ");
+        out.print( "Four[" + roundPoints[3] + "] / ");
+        out.print( "TRICK SUIT: " + trickSuit + " / " );
+    }
+
     public static void getCardToPlay() {
         Scanner keyboard = new Scanner(System.in);
-        out.print( "What card would you like to play?: ");
+        out.print( "What card would you like to play? (e.g., 'AS' or '10C'): ");
         String cardToPlayInput = keyboard.next();
         if (Character.isDigit(cardToPlayInput.charAt(0))) {
             String cardToPlayRankString = cardToPlayInput.replaceAll("[a-zA-Z]", "");
@@ -341,6 +348,7 @@ public class Hearts {
     public static boolean checkLegalFollowTrick() {
         boolean legalFollowTrick = false;
         boolean hasTrickSuit = false;
+        String cantFollowReason = "You must follow the Trick Suit.";
 
         for (int i = 0; i < deckOfCards.size(); i++ )
             if (deckOfCards.get(i).owner == turnOrder && deckOfCards.get(i).location.equals("Hand") && deckOfCards.get(i).suitLetter.equals(trickSuit))
@@ -349,15 +357,21 @@ public class Hearts {
         if ( !hasTrickSuit || cardToPlaySuit.equals(trickSuit) )
             legalFollowTrick = true;
 
-        if ( !hasTrickSuit && firstTrick && (cardToPlaySuit.equals("H") || ( cardToPlaySuit.equals("S") && cardToPlayRank == 12)) )
+        if ( !hasTrickSuit && firstTrick && (cardToPlaySuit.equals("H") || ( cardToPlaySuit.equals("S") && cardToPlayRank == 12)) ) {
             legalFollowTrick = false;
+            cantFollowReason = "You can't play a Heart or the QS on the first trick.";
+        }
+
+        if (!legalFollowTrick)
+            out.println( "ERROR: " + cantFollowReason);
+
         return legalFollowTrick;
     }
 
     public static boolean checkCardInHand() {
         boolean cardInHand = false;
         for (int i = 0; i < deckOfCards.size(); i++ ) {
-            if (deckOfCards.get(i).rank ==cardToPlayRank && deckOfCards.get(i).suitLetter.equals(cardToPlaySuit) )
+            if (deckOfCards.get(i).rank ==cardToPlayRank && deckOfCards.get(i).suitLetter.equals(cardToPlaySuit) && turnOrder == deckOfCards.get(i).owner )
                 cardInHand = true;
         }
         if (!cardInHand)
@@ -369,30 +383,6 @@ public class Hearts {
         for (int i = 0; i < deckOfCards.size(); i++ )
             if ( cardToPlayRank == deckOfCards.get(i).rank && cardToPlaySuit.equals(deckOfCards.get(i).suitLetter))
                 deckOfCards.get(i).setLoc("Table");
-    }
-
-    public static void startTrick() {
-        if ( trickWinner == 0 ) {
-            int index = 0;
-            for (int i = 0; i < deckOfCards.size(); i++ ) {
-                if ( deckOfCards.get(i).rank < deckOfCards.get(index).rank && deckOfCards.get(i).location.equals("Hand") )
-                    index = i;
-                else if ( deckOfCards.get(i).rank == deckOfCards.get(index).rank )
-                    if ( deckOfCards.get(i).suit < deckOfCards.get(index).suit )
-                        index = i;
-            }
-
-            turnOrder = deckOfCards.get(index).owner;
-        }
-        else if ( trickWinner > 0 && trickWinner < 5 ) {
-            turnOrder = trickWinner;
-            trickWinner = 0;
-        }
-        else
-            out.println( "TRICK START DETERMINATION ERROR " );
-
-        //if ( deckOfCards.get(index).rank == 2 && deckOfCards.get(index).suit == 1 )
-            //deuceClubsDealt = true;
     }
 
     public static boolean checkEndTrick() {
@@ -434,9 +424,9 @@ public class Hearts {
         for (int i = 0; i < deckOfCards.size(); i++ ) {
             if ( deckOfCards.get(i).location.equals("Table") ) {
                 if ( deckOfCards.get(i).suitLetter.equals("H") )
-                    turnPoints[trickWinner-1]++;
+                    roundPoints[trickWinner-1]++;
                 else if ( deckOfCards.get(i).suitLetter.equals("S") && deckOfCards.get(i).rank == 12 )
-                    turnPoints[trickWinner-1] += 13;
+                    roundPoints[trickWinner-1] += 13;
                 }
             }
         }
@@ -448,11 +438,55 @@ public class Hearts {
         }
     }
 
-    public static void displayScore() {
-        out.print( "\nSCORE: Player One[" + turnPoints[0] + "] / ");
-        out.print( "Two[" + turnPoints[1] + "] / ");
-        out.print( "Three[" + turnPoints[2] + "] / ");
-        out.print( "Four[" + turnPoints[3] + "] / ");
-        out.print( "TRICK SUIT: " + trickSuit + " / " );
+    public static boolean checkRoundOver(){
+        boolean roundOverTest = false;
+        if ( totalTurnPoints >= 26 ) {
+            int indexPoints = 0;
+            roundOverTest = true;
+            for (int i = 0; i < roundPoints.length; i++ ) {
+                if ( roundPoints[i] == 26 ) {
+                    indexPoints = i;
+                    for ( int k = 0; k < roundPoints.length; k++ ) {
+                        if ( k != indexPoints )
+                            gamePoints[k] += 26;
+                    }
+                }
+                else
+                    gamePoints[i] += roundPoints[i];
+            }
+            for ( int i : roundPoints)
+                roundPoints[i] = 0;
+        }
+
+
+        if (roundOverTest)
+            displayRoundScore();
+
+        return roundOverTest;
+    }
+
+    public static void endRound() {
+        addRoundScoreToTotalScore();
+        displayGameScore();
+        if (totalGamePoints >=100) {
+            gameOver = true;
+            int gameWinner = 0;
+            for ( int i : gamePoints )
+                if ( gamePoints[i] >= gamePoints[gameWinner] )
+                    gameWinner = i;
+            out.println( "Player " + ( gameWinner + 1) + " won the game!" );
+        }
+    }
+
+    public static void addRoundScoreToTotalScore() {
+        for ( int i : gamePoints )
+            gamePoints[i] += roundPoints[i];
+    }
+
+    public static void displayGameScore() {
+        out.print( "\nGAME SCORE: Player One[" + gamePoints[0] + "] / ");
+        out.print( "Two[" + gamePoints[1] + "] / ");
+        out.print( "Three[" + gamePoints[2] + "] / ");
+        out.print( "Four[" + gamePoints[3] + "]");
     }
 }
