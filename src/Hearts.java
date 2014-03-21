@@ -7,18 +7,6 @@ import static java.lang.System.out;
 /**
  * Copyright Parker Harris Emerson, 2014. Created on 13/03/14.
  */
-class Card {
-    int rank, suit, owner;
-    String location, suitLetter, suitWord, rankLetter, rankWord;
-
-    public String toString() {
-        return( this.rankLetter + this.suitLetter + " at " + this.location );
-    }
-
-    public void setLoc( String location ) {
-        this.location = location;
-    }
-}
 
 public class Hearts {
     private static ArrayList<Card> deckOfCards = new ArrayList<Card>(52);
