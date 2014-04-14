@@ -62,15 +62,18 @@ public class Hearts {
             playCardToTable();
 
             turnOrder++;
-            for ( int i = 1; i <= 20; i++)
+            for ( int i = 1; i <= 20; i++) {
                 out.println();
+            }
 
-            if ( turnOrder > 4 )
+            if ( turnOrder > 4 ) {
                 turnOrder = 1;
+            }
 
             boolean endOfTrick = checkEndTrick();
-            if ( endOfTrick )
+            if ( endOfTrick ) {
                 endTrick();
+            }
 
             roundOver = checkRoundOver();
         }
@@ -268,8 +271,9 @@ public class Hearts {
             turnOrder = trickWinner;
             trickWinner = 0;
         }
-        else
+        else {
             out.println( "TRICK START DETERMINATION ERROR " );
+        }
     }
 
     public static void displayHand() {
@@ -382,9 +386,11 @@ public class Hearts {
         boolean hasTrickSuit = false;
         String cantFollowReason = "You must follow the Trick Suit.";
 
-        for (int i = 0; i < deckOfCards.size(); i++ )
-            if (deckOfCards.get(i).getOwner() == turnOrder && deckOfCards.get(i).getLoc() == CardLocation.HAND && deckOfCards.get(i).getSuit() ==trickSuit)
+        for (int i = 0; i < deckOfCards.size(); i++ ) {
+            if (deckOfCards.get(i).getOwner() == turnOrder && deckOfCards.get(i).getLoc() == CardLocation.HAND && deckOfCards.get(i).getSuit() ==trickSuit) {
                 hasTrickSuit = true;
+            }
+        }
 
         if ( !hasTrickSuit || cardToPlaySuit.equals(trickSuit) )
             legalFollowTrick = true;
@@ -394,8 +400,9 @@ public class Hearts {
             cantFollowReason = "You can't play a Heart or the QS on the first trick.";
         }
 
-        if (!legalFollowTrick)
+        if (!legalFollowTrick) {
             out.println( "ERROR: " + cantFollowReason);
+        }
 
         return legalFollowTrick;
     }
@@ -406,25 +413,30 @@ public class Hearts {
             if (deckOfCards.get(i).getRank() ==cardToPlayRank && deckOfCards.get(i).getSuit() == cardToPlaySuit && turnOrder == deckOfCards.get(i).getOwner() )
                 cardInHand = true;
         }
-        if (!cardInHand)
+        if (!cardInHand) {
             out.println( "Please choose a card in your hand." );
+        }
         return cardInHand;
     }
 
     public static void playCardToTable() {
-        for (int i = 0; i < deckOfCards.size(); i++ )
-            if ( cardToPlayRank == deckOfCards.get(i).getRank() && cardToPlaySuit == deckOfCards.get(i).getSuit() )
+        for (int i = 0; i < deckOfCards.size(); i++ ) {
+            if ( cardToPlayRank == deckOfCards.get(i).getRank() && cardToPlaySuit == deckOfCards.get(i).getSuit() ) {
                 deckOfCards.get(i).setLoc( CardLocation.TABLE );
+            }
+        }
     }
 
     public static boolean checkEndTrick() {
         int cardsOnTable = 0;
-        for (int i = 0; i < deckOfCards.size(); i++ )
-            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE)
+        for (int i = 0; i < deckOfCards.size(); i++ ) {
+            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE) {
                 cardsOnTable++;
+            }
+        }
 
         return (cardsOnTable == 4);
-        }
+    }
 
     public static void endTrick() {
         trickWinner = checkTrickWinner();
@@ -435,17 +447,21 @@ public class Hearts {
 
     public static int checkTrickWinner() {
         int index = 0;
-        for (int i = 0; i < deckOfCards.size(); i++ )
-            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE )
-                if ( deckOfCards.get(i).getSuit() == trickSuit && deckOfCards.get(i).getRank().getRankValue() >= deckOfCards.get(index).getRank().getRankValue() )
+        for (int i = 0; i < deckOfCards.size(); i++ ) {
+            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE ) {
+                if ( deckOfCards.get(i).getSuit() == trickSuit && deckOfCards.get(i).getRank().getRankValue() >= deckOfCards.get(index).getRank().getRankValue() ) {
                     index = i;
+                }
+            }
+        }
 
         trickWinner = deckOfCards.get(index).getOwner();
 
         out.print( "\nPlayer " + trickWinner + " won the trick, taking the cards: ");
         for ( Card forTemp : deckOfCards ) {
-            if ( forTemp.getLoc() == CardLocation.TABLE )
+            if ( forTemp.getLoc() == CardLocation.TABLE ) {
                 out.print( forTemp.shortPrint() );
+            }
         }
         out.println();
 
@@ -455,18 +471,21 @@ public class Hearts {
     public static void scoreTrickPoints( int trickWinner ) {
         for (int i = 0; i < deckOfCards.size(); i++ ) {
             if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE ) {
-                if ( deckOfCards.get(i).getSuit() == Suit.HEARTS )
+                if ( deckOfCards.get(i).getSuit() == Suit.HEARTS ) {
                     roundPoints[trickWinner-1]++;
-                else if ( deckOfCards.get(i).getSuit() == Suit.SPADES && deckOfCards.get(i).getRank() == Rank.QUEEN )
+                }
+                else if ( deckOfCards.get(i).getSuit() == Suit.SPADES && deckOfCards.get(i).getRank() == Rank.QUEEN ) {
                     roundPoints[trickWinner-1] += 13;
                 }
             }
         }
+    }
 
     public static void clearTable() {
         for (int i = 0; i < deckOfCards.size(); i++ ) {
-            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE )
+            if ( deckOfCards.get(i).getLoc() == CardLocation.TABLE ) {
                 deckOfCards.get(i).setLoc(CardLocation.DISCARD);
+            }
         }
     }
 
@@ -479,20 +498,23 @@ public class Hearts {
                 if ( roundPoints[i] == 26 ) {
                     indexPoints = i;
                     for ( int k = 0; k < roundPoints.length; k++ ) {
-                        if ( k != indexPoints )
+                        if ( k != indexPoints ) {
                             gamePoints[k] += 26;
+                        }
                     }
                 }
-                else
+                else {
                     gamePoints[i] += roundPoints[i];
+                }
             }
-            for ( int i : roundPoints)
+            for ( int i : roundPoints) {
                 roundPoints[i] = 0;
+            }
         }
 
-
-        if (roundOverTest)
+        if (roundOverTest) {
             displayRoundScore();
+        }
 
         return roundOverTest;
     }
